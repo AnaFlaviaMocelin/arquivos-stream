@@ -1,5 +1,7 @@
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -8,8 +10,9 @@ import java.util.stream.Stream;
 
 public class Main {
     public static void main(String[] args) {
-        List<Oscar> oscarMale = addOscars(pathMale());
-        List<Oscar> oscarFemale = addOscars(pathFemale());
+        Main app = new Main();
+        List<Oscar> oscarMale = app.addOscars(app.getPath("csv/oscar_age_male.csv"));
+        List<Oscar> oscarFemale = app.addOscars(app.getPath("csv/oscar_age_female.csv"));
 
         System.out.println("1 - Quem foi o ator mais jovem a ganhar um Oscar?");
         oscarMale.stream()
@@ -55,30 +58,24 @@ public class Main {
 
 
         System.out.println("\n5 - Selecionar ator");
-        selectActor(oscars, "Natalie Portman");
-        selectActor(oscars, "Tom Hanks");
-        selectActor(oscars, "Katharine Hepburn");
+        app.selectActor(oscars, "Natalie Portman");
+        app.selectActor(oscars, "Tom Hanks");
+        app.selectActor(oscars, "Katharine Hepburn");
 
 
         oscars = oscars.stream()
                 .sorted(Comparator.comparing(Oscar::getYear))
                 .collect(Collectors.toList());
-        exportToFile(oscars);
+        app.exportToFileCsv(oscars);
     }
 
-    private static String getPath() {
-        return System.getProperty("user.home") + "/IdeaProjects/arquivos-stream/";
+    private Path getPath(String filename){
+        URL url = this.getClass().getClassLoader().getResource(filename);
+        File file = new File(url.getFile());
+        return Path.of(file.getPath().replaceAll("%20", " "));
     }
 
-    private static Path pathMale() {
-        return Path.of(getPath(), "oscar_age_male.csv");
-    }
-
-    private static Path pathFemale() {
-        return Path.of(getPath(), "oscar_age_female.csv");
-    }
-
-    private static List<String> readFile(Path path) {
+    private List<String> readFile(Path path) {
         try(Stream<String> file = Files.lines(path)){
             return file
                     .skip(1)
@@ -89,7 +86,7 @@ public class Main {
         return null;
     }
 
-    private static List<Oscar> addOscars(Path path) {
+    private List<Oscar> addOscars(Path path) {
         List<String> listAward = readFile(path);
 
         List<Oscar> oscars = new ArrayList<>();
@@ -105,7 +102,7 @@ public class Main {
         return oscars;
     }
 
-    private static void selectActor(List<Oscar> oscars, String name) {
+    private void selectActor(List<Oscar> oscars, String name) {
         List<Oscar> selected = oscars.stream()
                 .filter(s -> s.getName().equals(name))
                 .collect(Collectors.toList());
@@ -119,19 +116,24 @@ public class Main {
                 .forEach(f -> System.out.println("- " + f.getMovie() + ", Ano: " + f.getYear()));
     }
 
-    private static void exportToFile(List<Oscar> oscars) {
-        String path = getPath() + "oscar_age.csv";
+    private void exportToFileCsv(List<Oscar> oscars) {
+        String path = this.getClass()
+                .getClassLoader()
+                .getResource("csv/")
+                .getPath()
+                .replace("%20", " ");
+        String fileName = "oscar_age.csv";
 
-        try(FileOutputStream file = new FileOutputStream(path)){
-            String linha = "Index; Year; Age; Name; Movie\n";
-            file.write(linha.getBytes());
+        try(FileOutputStream file = new FileOutputStream(path+fileName)){
+            String line = "Index; Year; Age; Name; Movie\n";
+            file.write(line.getBytes());
             for(Oscar oscar : oscars){
-                linha = oscar.getId() + "; ";
-                linha += oscar.getYear() + "; ";
-                linha += oscar.getAge() + "; ";
-                linha += oscar.getName() + "; ";
-                linha += oscar.getMovie() + "\n";
-                file.write(linha.getBytes());
+                line = oscar.getId() + "; ";
+                line += oscar.getYear() + "; ";
+                line += oscar.getAge() + "; ";
+                line += oscar.getName() + "; ";
+                line += oscar.getMovie() + "\n";
+                file.write(line.getBytes());
             }
         } catch (IOException e){
             System.err.println("Erro ao gravar no arquivo");
