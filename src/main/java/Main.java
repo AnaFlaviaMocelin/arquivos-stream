@@ -69,8 +69,8 @@ public class Main {
         app.exportToFileCsv(oscars);
     }
 
-    private Path getPath(String filename){
-        URL url = this.getClass().getClassLoader().getResource(filename);
+    private Path getPath(String fileName){
+        URL url = this.getClass().getClassLoader().getResource(fileName);
         File file = new File(url.getFile());
         return Path.of(file.getPath().replaceAll("%20", " "));
     }
